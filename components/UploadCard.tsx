@@ -1,0 +1,334 @@
+'use client';
+
+import { useState, useRef, useCallback } from 'react';
+
+interface UploadCardProps {
+  onTranscribe: (
+    file: File | null,
+    url: string | null,
+    options: any,
+    fileName?: string,
+    duration?: number
+  ) => void;
+  isProcessing: boolean;
+}
+
+export default function UploadCard({ onTranscribe, isProcessing }: UploadCardProps) {
+  const [file, setFile] = useState<File | null>(null);
+  const [url, setUrl] = useState('');
+  const [audioDuration, setAudioDuration] = useState<number | undefined>();
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [options, setOptions] = useState({
+    autoChapters: false,
+    sentimentAnalysis: false,
+    disfluencies: false,
+    customPrompt: '',
+  });
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const validateFile = (selectedFile: File): boolean => {
+    const validTypes = [
+      'audio/mpeg',
+      'audio/mp3',
+      'audio/wav',
+      'audio/x-wav',
+      'audio/m4a',
+      'audio/x-m4a',
+      'video/mp4',
+      'video/x-m4v',
+    ];
+    
+    const validExtensions = ['.mp3', '.wav', '.m4a', '.mp4'];
+    const fileName = selectedFile.name.toLowerCase();
+    
+    const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+    const hasValidType = validTypes.includes(selectedFile.type);
+
+    if (!hasValidExtension && !hasValidType) {
+      setError('Please upload a valid audio/video file (MP3, WAV, M4A, MP4)');
+      return false;
+    }
+
+    // Check file size (50MB limit)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (selectedFile.size > maxSize) {
+      setError('File size must be less than 50MB');
+      return false;
+    }
+
+    setError(null);
+    return true;
+  };
+
+  const handleFileSelect = useCallback((selectedFile: File) => {
+    if (!validateFile(selectedFile)) {
+      return;
+    }
+
+    setFile(selectedFile);
+    setUrl(''); // Clear URL when file is selected
+
+    // Try to get audio duration
+    const audioUrl = URL.createObjectURL(selectedFile);
+    const audio = new Audio(audioUrl);
+    
+    audio.addEventListener('loadedmetadata', () => {
+      setAudioDuration(audio.duration);
+      URL.revokeObjectURL(audioUrl);
+    });
+
+    audio.addEventListener('error', () => {
+      URL.revokeObjectURL(audioUrl);
+    });
+  }, []);
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      handleFileSelect(selectedFile);
+    }
+  };
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragOver(false);
+
+      const droppedFile = e.dataTransfer.files[0];
+      if (droppedFile) {
+        handleFileSelect(droppedFile);
+      }
+    },
+    [handleFileSelect]
+  );
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUrl = e.target.value;
+    setUrl(newUrl);
+    if (newUrl) {
+      setFile(null); // Clear file when URL is entered
+      setError(null);
+    }
+  };
+
+  const handleSubmit = () => {
+    setError(null);
+
+    if (!file && !url.trim()) {
+      setError('Please select a file or enter a URL');
+      return;
+    }
+
+    if (url && !url.match(/^https?:\/\/.+/)) {
+      setError('Please enter a valid URL');
+      return;
+    }
+
+    onTranscribe(file, url.trim() || null, options, file?.name, audioDuration);
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
+
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        Upload & Settings
+      </h2>
+
+      {/* File Dropzone */}
+      <div
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          isDragOver
+            ? 'border-blue-500 bg-blue-50'
+            : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
+        {file ? (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-900">{file.name}</p>
+            <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
+              <span>Size: {formatFileSize(file.size)}</span>
+              {audioDuration && (
+                <span>Duration: {formatDuration(audioDuration)}</span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFile(null);
+                setAudioDuration(undefined);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = '';
+                }
+              }}
+              className="text-sm text-blue-600 hover:text-blue-700 mt-2"
+            >
+              Remove file
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p className="text-gray-600 mb-2">
+              Drag and drop a file here, or click to browse
+            </p>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              disabled={isProcessing}
+            >
+              Browse file
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*,video/*,.mp3,.wav,.m4a,.mp4"
+              onChange={handleFileInputChange}
+              className="hidden"
+              disabled={isProcessing}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* URL Input */}
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Or enter a public URL
+        </label>
+        <input
+          type="text"
+          value={url}
+          onChange={handleUrlChange}
+          placeholder="https://example.com/audio.mp3"
+          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          disabled={isProcessing || !!file}
+        />
+      </div>
+
+      {/* Options */}
+      <div className="mt-6 space-y-4">
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="autoChapters"
+            checked={options.autoChapters}
+            onChange={(e) =>
+              setOptions({ ...options, autoChapters: e.target.checked })
+            }
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            disabled={isProcessing}
+          />
+          <label htmlFor="autoChapters" className="ml-2 text-sm text-gray-700">
+            Enable auto chapters / topics (if supported)
+          </label>
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="sentimentAnalysis"
+            checked={options.sentimentAnalysis}
+            onChange={(e) =>
+              setOptions({ ...options, sentimentAnalysis: e.target.checked })
+            }
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            disabled={isProcessing}
+          />
+          <label htmlFor="sentimentAnalysis" className="ml-2 text-sm text-gray-700">
+            Enable sentiment analysis (if supported)
+          </label>
+        </div>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="disfluencies"
+            checked={options.disfluencies}
+            onChange={(e) =>
+              setOptions({ ...options, disfluencies: e.target.checked })
+            }
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            disabled={isProcessing}
+          />
+          <label htmlFor="disfluencies" className="ml-2 text-sm text-gray-700">
+            Remove disfluencies / fillers (uh, um) if supported
+          </label>
+        </div>
+
+        <div>
+          <label
+            htmlFor="customPrompt"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Custom prompt/instructions for model
+          </label>
+          <textarea
+            id="customPrompt"
+            value={options.customPrompt}
+            onChange={(e) =>
+              setOptions({ ...options, customPrompt: e.target.value })
+            }
+            placeholder="Optional: Provide custom instructions for the model"
+            rows={3}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            disabled={isProcessing}
+          />
+        </div>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      {/* Transcribe Button */}
+      <button
+        onClick={handleSubmit}
+        disabled={isProcessing || (!file && !url.trim())}
+        className={`mt-6 w-full py-3 px-4 rounded-md font-medium transition-all ${
+          isProcessing || (!file && !url.trim())
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
+        }`}
+      >
+        {isProcessing ? (
+          <span className="flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+            Transcribing...
+          </span>
+        ) : (
+          'Transcribe'
+        )}
+      </button>
+    </div>
+  );
+}
+
