@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import UploadCard from '@/components/UploadCard';
 import StatusIndicator from '@/components/StatusIndicator';
 import TranscriptViewer from '@/components/TranscriptViewer';
@@ -10,6 +12,7 @@ import JsonViewer from '@/components/JsonViewer';
 import { TranscriptResponse, TranscriptionStatus, HistoryItem } from '@/lib/types';
 
 export default function Home() {
+  const { data: session } = useSession();
   const [apiReady, setApiReady] = useState<boolean>(false);
   const [transcript, setTranscript] = useState<TranscriptResponse | null>(null);
   const [status, setStatus] = useState<TranscriptionStatus>(TranscriptionStatus.IDLE);
@@ -83,8 +86,10 @@ export default function Home() {
       
       if (file) {
         formData.append('file', file);
+        formData.append('fileName', fileName || file.name);
       } else if (url) {
         formData.append('url', url);
+        formData.append('fileName', fileName || url);
       }
 
       formData.append('auto_chapters', String(options.autoChapters || false));
@@ -108,9 +113,11 @@ export default function Home() {
       setTranscript(data);
       setStatus(TranscriptionStatus.COMPLETED);
 
-      // Save to history
-      const displayName = fileName || url || 'Untitled';
-      saveToHistory(data, displayName, duration);
+      // Save to localStorage history for guest users (authenticated users have it in DB)
+      if (!session) {
+        const displayName = fileName || url || 'Untitled';
+        saveToHistory(data, displayName, duration);
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
       setStatus(TranscriptionStatus.ERROR);
@@ -125,32 +132,59 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Header */}
-        <header className="text-center mb-8">
-          <div className="flex items-center justify-center gap-4 mb-2">
-            <h1 className="text-4xl font-bold text-gray-900">
-              AssemblyAI Playground
-            </h1>
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                apiReady
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
-              }`}
-            >
-              {apiReady ? 'API Ready' : 'No API Key'}
-            </span>
+    <main className="min-h-screen py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Sign-up prompt for guest users */}
+        {!session && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-blue-900 mb-1">
+                  Sign up to save your transcripts
+                </h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  Create a free account to access your transcripts from any device and keep them organized.
+                </p>
+                <div className="flex gap-3">
+                  <Link
+                    href="/auth/signup"
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    Create account →
+                  </Link>
+                  <Link
+                    href="/auth/signin"
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    Sign in
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
-          <p className="text-lg text-gray-600">
-            Upload audio, transcribe, and analyze with AssemblyAI
-          </p>
-        </header>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* API Status */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
+              apiReady
+                ? 'bg-green-100 text-green-800'
+                : 'bg-red-100 text-red-800'
+            }`}
+          >
+            {apiReady ? '✓ API Ready' : '✗ No API Key'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Content */}
-          <section className="lg:col-span-2 space-y-6">
+          <section className="lg:col-span-3 space-y-6">
             <UploadCard
               onTranscribe={handleTranscribe}
               isProcessing={status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.UPLOADING}

@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { client } from '@/lib/assemblyai';
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/db';
 import { TranscriptionOptions, TranscriptResponse } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    
+    // Allow both authenticated and guest users for now
+    // Guest users won't have their transcripts saved to DB
+    
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const url = formData.get('url') as string | null;
+    const fileName = formData.get('fileName') as string | null;
 
     if (!file && !url) {
       return NextResponse.json(
@@ -36,6 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     let audioSource: string | Buffer;
+    const sourceType = file ? 'file' : 'url';
 
     if (file) {
       // Convert File to Buffer
@@ -96,6 +105,36 @@ export async function POST(req: NextRequest) {
       sentiment: transcript.sentiment_analysis_results || undefined,
       raw: transcript,
     };
+
+    // Save to database if user is authenticated
+    if (session?.user?.id) {
+      const title = fileName || (file ? file.name : url) || 'Untitled Transcript';
+      
+      const insights: any = {};
+      if (transcript.chapters) insights.chapters = transcript.chapters;
+      if (transcript.sentiment_analysis_results) {
+        insights.sentiment = transcript.sentiment_analysis_results;
+      }
+      if (transcript.summary) insights.summary = transcript.summary;
+
+      const dbTranscript = await prisma.transcript.create({
+        data: {
+          userId: session.user.id,
+          title,
+          audioUrl: url || transcript.audio_url || null,
+          audioSource: sourceType,
+          text: transcript.text || '',
+          duration: transcript.audio_duration || null,
+          status: 'completed',
+          assemblyaiId: transcript.id,
+          config: JSON.stringify(options),
+          insights: Object.keys(insights).length > 0 ? JSON.stringify(insights) : null,
+        },
+      });
+
+      // Add database ID to response
+      normalizedResponse.dbId = dbTranscript.id;
+    }
 
     return NextResponse.json(normalizedResponse);
   } catch (error: any) {

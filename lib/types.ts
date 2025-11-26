@@ -24,6 +24,7 @@ export interface SentimentAnalysisResult {
 
 export interface TranscriptResponse {
   id: string;
+  dbId?: string; // Database ID for authenticated users
   text: string;
   words?: Word[];
   audioUrl?: string;
