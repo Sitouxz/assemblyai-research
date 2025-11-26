@@ -23,25 +23,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build transcription options
-    const options: TranscriptionOptions = {};
-    
-    if (formData.get('auto_chapters') === 'true') {
-      options.auto_chapters = true;
-    }
-    
-    if (formData.get('sentiment_analysis') === 'true') {
-      options.sentiment_analysis = true;
-    }
-    
-    if (formData.get('disfluencies') === 'true') {
-      options.disfluencies = true;
-    }
-    
-    const customPrompt = formData.get('custom_prompt') as string | null;
-    if (customPrompt && customPrompt.trim()) {
-      options.custom_prompt = customPrompt.trim();
-    }
+    // Build transcription options from form data
+    const optionsJson = formData.get('options') as string | null;
+    const options: TranscriptionOptions = optionsJson ? JSON.parse(optionsJson) : {};
 
     let audioSource: string | Buffer;
     const sourceType = file ? 'file' : 'url';
@@ -59,26 +43,51 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Prepare SDK options
+    // Prepare SDK options - map all advanced features
     const sdkOptions: any = {
       audio: audioSource,
     };
 
-    if (options.auto_chapters) {
-      sdkOptions.auto_chapters = true;
+    // Basic options
+    if (options.language_code) sdkOptions.language_code = options.language_code;
+    if (options.language_detection) sdkOptions.language_detection = true;
+
+    // Speech-to-Text
+    if (options.speaker_labels) {
+      sdkOptions.speaker_labels = true;
+      if (options.speakers_expected) {
+        sdkOptions.speakers_expected = options.speakers_expected;
+      }
+    }
+    if (options.disfluencies) sdkOptions.disfluencies = true;
+    if (options.word_boost && options.word_boost.length > 0) {
+      sdkOptions.word_boost = options.word_boost;
+      if (options.boost_param) sdkOptions.boost_param = options.boost_param;
     }
 
-    if (options.sentiment_analysis) {
-      sdkOptions.sentiment_analysis = true;
+    // Speech Understanding
+    if (options.auto_chapters) sdkOptions.auto_chapters = true;
+    if (options.sentiment_analysis) sdkOptions.sentiment_analysis = true;
+    if (options.entity_detection) sdkOptions.entity_detection = true;
+    if (options.iab_categories) sdkOptions.iab_categories = true;
+    if (options.content_safety) sdkOptions.content_safety = true;
+    if (options.auto_highlights) sdkOptions.auto_highlights = true;
+
+    // PII Redaction
+    if (options.redact_pii) {
+      sdkOptions.redact_pii = true;
+      if (options.redact_pii_audio) sdkOptions.redact_pii_audio = true;
+      if (options.redact_pii_policies && options.redact_pii_policies.length > 0) {
+        sdkOptions.redact_pii_policies = options.redact_pii_policies;
+      }
+      if (options.redact_pii_sub) sdkOptions.redact_pii_sub = options.redact_pii_sub;
     }
 
-    if (options.disfluencies) {
-      sdkOptions.disfluencies = true;
+    // Custom
+    if (options.custom_spelling && options.custom_spelling.length > 0) {
+      sdkOptions.custom_spelling = options.custom_spelling;
     }
-
-    if (options.custom_prompt) {
-      sdkOptions.prompt = options.custom_prompt;
-    }
+    if (options.custom_prompt) sdkOptions.prompt = options.custom_prompt;
 
     // Transcribe using AssemblyAI SDK
     // The SDK handles upload and polling internally
@@ -91,7 +100,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Normalize response
+    // Normalize response with all new fields
     const normalizedResponse: TranscriptResponse = {
       id: transcript.id,
       text: transcript.text || '',
@@ -103,6 +112,11 @@ export async function POST(req: NextRequest) {
       summary: transcript.summary || undefined,
       chapters: transcript.chapters || undefined,
       sentiment: transcript.sentiment_analysis_results || undefined,
+      entities: transcript.entities || undefined,
+      iab_categories: transcript.iab_categories_result || undefined,
+      content_safety_labels: transcript.content_safety_labels?.results || undefined,
+      auto_highlights_result: transcript.auto_highlights_result?.results || undefined,
+      speakers: transcript.speakers_expected || undefined,
       raw: transcript,
     };
 
@@ -116,6 +130,11 @@ export async function POST(req: NextRequest) {
         insights.sentiment = transcript.sentiment_analysis_results;
       }
       if (transcript.summary) insights.summary = transcript.summary;
+      if (transcript.entities) insights.entities = transcript.entities;
+      if (transcript.iab_categories_result) insights.iab_categories = transcript.iab_categories_result;
+      if (transcript.content_safety_labels?.results) insights.content_safety_labels = transcript.content_safety_labels.results;
+      if (transcript.auto_highlights_result?.results) insights.auto_highlights = transcript.auto_highlights_result.results;
+      if (transcript.words) insights.words = transcript.words;
 
       const dbTranscript = await prisma.transcript.create({
         data: {

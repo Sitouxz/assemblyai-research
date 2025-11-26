@@ -92,10 +92,8 @@ export default function Home() {
         formData.append('fileName', fileName || url);
       }
 
-      formData.append('auto_chapters', String(options.autoChapters || false));
-      formData.append('sentiment_analysis', String(options.sentimentAnalysis || false));
-      formData.append('disfluencies', String(options.disfluencies || false));
-      formData.append('custom_prompt', options.customPrompt || '');
+      // Send options as JSON
+      formData.append('options', JSON.stringify(options));
 
       setStatus(TranscriptionStatus.PROCESSING);
 

@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import AdvancedOptions from './AdvancedOptions';
+import { TranscriptionOptions } from '@/lib/types';
 
 interface UploadCardProps {
   onTranscribe: (
     file: File | null,
     url: string | null,
-    options: any,
+    options: TranscriptionOptions,
     fileName?: string,
     duration?: number
   ) => void;
@@ -18,12 +20,7 @@ export default function UploadCard({ onTranscribe, isProcessing }: UploadCardPro
   const [url, setUrl] = useState('');
   const [audioDuration, setAudioDuration] = useState<number | undefined>();
   const [isDragOver, setIsDragOver] = useState(false);
-  const [options, setOptions] = useState({
-    autoChapters: false,
-    sentimentAnalysis: false,
-    disfluencies: false,
-    customPrompt: '',
-  });
+  const [options, setOptions] = useState<TranscriptionOptions>({});
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -85,9 +82,11 @@ export default function UploadCard({ onTranscribe, isProcessing }: UploadCardPro
   }, []);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      handleFileSelect(selectedFile);
+    const selectedFiles = Array.from(e.target.files || []);
+    if (selectedFiles.length > 0) {
+      // For now, just select the first file
+      // Multi-file support will be handled by the queue in the parent component
+      handleFileSelect(selectedFiles[0]);
     }
   };
 
@@ -211,6 +210,7 @@ export default function UploadCard({ onTranscribe, isProcessing }: UploadCardPro
               onChange={handleFileInputChange}
               className="hidden"
               disabled={isProcessing}
+              multiple
             />
           </div>
         )}
@@ -232,74 +232,12 @@ export default function UploadCard({ onTranscribe, isProcessing }: UploadCardPro
       </div>
 
       {/* Options */}
-      <div className="mt-6 space-y-4">
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="autoChapters"
-            checked={options.autoChapters}
-            onChange={(e) =>
-              setOptions({ ...options, autoChapters: e.target.checked })
-            }
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            disabled={isProcessing}
-          />
-          <label htmlFor="autoChapters" className="ml-2 text-sm text-gray-700">
-            Enable auto chapters / topics (if supported)
-          </label>
-        </div>
-
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="sentimentAnalysis"
-            checked={options.sentimentAnalysis}
-            onChange={(e) =>
-              setOptions({ ...options, sentimentAnalysis: e.target.checked })
-            }
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            disabled={isProcessing}
-          />
-          <label htmlFor="sentimentAnalysis" className="ml-2 text-sm text-gray-700">
-            Enable sentiment analysis (if supported)
-          </label>
-        </div>
-
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="disfluencies"
-            checked={options.disfluencies}
-            onChange={(e) =>
-              setOptions({ ...options, disfluencies: e.target.checked })
-            }
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            disabled={isProcessing}
-          />
-          <label htmlFor="disfluencies" className="ml-2 text-sm text-gray-700">
-            Remove disfluencies / fillers (uh, um) if supported
-          </label>
-        </div>
-
-        <div>
-          <label
-            htmlFor="customPrompt"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Custom prompt/instructions for model
-          </label>
-          <textarea
-            id="customPrompt"
-            value={options.customPrompt}
-            onChange={(e) =>
-              setOptions({ ...options, customPrompt: e.target.value })
-            }
-            placeholder="Optional: Provide custom instructions for the model"
-            rows={3}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-            disabled={isProcessing}
-          />
-        </div>
+      <div className="mt-6">
+        <AdvancedOptions
+          options={options}
+          onChange={setOptions}
+          disabled={isProcessing}
+        />
       </div>
 
       {/* Error Display */}
