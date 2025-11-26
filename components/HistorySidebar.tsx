@@ -47,13 +47,13 @@ export default function HistorySidebar({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Recent Transcripts</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Transcripts</h2>
         {history.length > 0 && (
           <button
             onClick={handleClear}
-            className="text-xs text-red-600 hover:text-red-700 font-medium"
+            className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
           >
             Clear
           </button>
@@ -62,8 +62,8 @@ export default function HistorySidebar({
 
       {history.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-sm text-gray-500">No recent transcripts</p>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400">No recent transcripts</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
             Transcripts will appear here after you transcribe audio files
           </p>
         </div>
@@ -73,17 +73,17 @@ export default function HistorySidebar({
             <button
               key={item.id}
               onClick={() => onSelect(item)}
-              className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group"
+              className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
             >
               <div className="flex items-start justify-between mb-1">
-                <p className="text-sm font-medium text-gray-900 truncate flex-1 group-hover:text-blue-700">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1 group-hover:text-blue-700 dark:group-hover:text-blue-400">
                   {item.fileName}
                 </p>
               </div>
-              <p className="text-xs text-gray-500 line-clamp-2 mb-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
                 {item.snippet}
               </p>
-              <div className="flex items-center justify-between text-xs text-gray-400">
+              <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
                 <span>{formatDate(item.createdAt)}</span>
                 {item.duration && (
                   <span>{formatDuration(item.duration)}</span>

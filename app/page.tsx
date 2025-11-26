@@ -9,6 +9,7 @@ import TranscriptViewer from '@/components/TranscriptViewer';
 import InsightsPanel from '@/components/InsightsPanel';
 import HistorySidebar from '@/components/HistorySidebar';
 import JsonViewer from '@/components/JsonViewer';
+import PatchNotes from '@/components/PatchNotes';
 import { TranscriptResponse, TranscriptionStatus, HistoryItem } from '@/lib/types';
 
 export default function Home() {
@@ -134,30 +135,30 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Sign-up prompt for guest users */}
         {!session && (
-          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 transition-colors">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-blue-900 mb-1">
+                <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
                   Sign up to save your transcripts
                 </h3>
-                <p className="text-sm text-blue-700 mb-3">
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
                   Create a free account to access your transcripts from any device and keep them organized.
                 </p>
                 <div className="flex gap-3">
                   <Link
                     href="/auth/signup"
-                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                   >
                     Create account →
                   </Link>
                   <Link
                     href="/auth/signin"
-                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                   >
                     Sign in
                   </Link>
@@ -172,12 +173,17 @@ export default function Home() {
           <span
             className={`px-3 py-1 rounded-full text-xs font-medium ${
               apiReady
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
+                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
             }`}
           >
             {apiReady ? '✓ API Ready' : '✗ No API Key'}
           </span>
+        </div>
+
+        {/* Patch Notes */}
+        <div className="mb-8">
+          <PatchNotes />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

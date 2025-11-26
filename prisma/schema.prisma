@@ -11,31 +11,41 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  password    String
-  name        String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  transcripts Transcript[]
+  id              String           @id @default(cuid())
+  email           String           @unique
+  password        String
+  name            String?
+  settings        String?          // JSON: theme, preferences, etc.
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  transcripts     Transcript[]
+  transcriptEdits TranscriptEdit[]
+  annotations     Annotation[]
+  bookmarks       Bookmark[]
+  comments        Comment[]
+  folders         Folder[]
 }
 
 model Transcript {
-  id           String      @id @default(cuid())
-  userId       String
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title        String
-  audioUrl     String?
-  audioSource  String?  // 'file' or 'url'
-  text         String
-  duration     Float?
-  status       String      @default("completed")
-  assemblyaiId String?
-  config       String?  // JSON string for TranscriptionConfig
-  insights     String?  // JSON string for chapters, sentiment, etc.
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  shareLinks   ShareLink[]
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  audioUrl        String?
+  audioSource     String?  // 'file' or 'url'
+  text            String
+  duration        Float?
+  status          String           @default("completed")
+  assemblyaiId    String?
+  config          String?  // JSON string for TranscriptionConfig
+  insights        String?  // JSON string for chapters, sentiment, etc.
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  shareLinks      ShareLink[]
+  transcriptEdits TranscriptEdit[]
+  annotations     Annotation[]
+  bookmarks       Bookmark[]
+  comments        Comment[]
 
   @@index([userId])
   @@index([status])
@@ -57,5 +67,122 @@ model ShareLink {
   @@index([token])
   @@index([transcriptId])
   @@index([expiresAt])
+}
+
+model TranscriptEdit {
+  id           String     @id @default(cuid())
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  editedText   String     // Full edited text
+  changes      String?    // JSON: array of change objects
+  createdAt    DateTime   @default(now())
+
+  @@index([transcriptId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Annotation {
+  id           String    @id @default(cuid())
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startMs      Int       // Start time in milliseconds
+  endMs        Int       // End time in milliseconds
+  text         String    // Annotation content
+  labels       String?   // JSON: array of label strings
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([transcriptId])
+  @@index([userId])
+  @@index([startMs])
+}
+
+model Folder {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  parentId  String?
+  parent    Folder?  @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Folder[] @relation("FolderTree")
+  createdAt DateTime @default(now())
+  transcriptFolders TranscriptFolder[]
+
+  @@index([userId])
+  @@index([parentId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?
+  createdAt DateTime @default(now())
+  transcriptTags TranscriptTag[]
+}
+
+model TranscriptFolder {
+  id           String     @id @default(cuid())
+  transcriptId String
+  folderId     String
+  folder       Folder     @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([transcriptId, folderId])
+  @@index([transcriptId])
+  @@index([folderId])
+}
+
+model TranscriptTag {
+  id           String   @id @default(cuid())
+  transcriptId String
+  tagId        String
+  tag          Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@unique([transcriptId, tagId])
+  @@index([transcriptId])
+  @@index([tagId])
+}
+
+model Bookmark {
+  id           String     @id @default(cuid())
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  timestampMs  Int        // Timestamp in milliseconds
+  createdAt    DateTime   @default(now())
+
+  @@index([transcriptId])
+  @@index([userId])
+  @@index([timestampMs])
+}
+
+model Comment {
+  id           String     @id @default(cuid())
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentId     String?    // For reply threads
+  parent       Comment?   @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      Comment[]  @relation("CommentReplies")
+  startMs      Int?       // Optional timestamp anchor
+  endMs        Int?       // Optional timestamp range
+  text         String
+  mentions     String?    // JSON: array of mentioned user IDs
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([transcriptId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([startMs])
 }
 
