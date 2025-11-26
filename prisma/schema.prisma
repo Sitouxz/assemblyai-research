@@ -21,23 +21,41 @@ model User {
 }
 
 model Transcript {
-  id           String   @id @default(cuid())
+  id           String      @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   title        String
   audioUrl     String?
   audioSource  String?  // 'file' or 'url'
   text         String
   duration     Float?
-  status       String   @default("completed")
+  status       String      @default("completed")
   assemblyaiId String?
   config       String?  // JSON string for TranscriptionConfig
   insights     String?  // JSON string for chapters, sentiment, etc.
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  shareLinks   ShareLink[]
 
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+}
+
+model ShareLink {
+  id           String    @id @default(cuid())
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  token        String    @unique
+  password     String?   // Hashed password (optional)
+  expiresAt    DateTime? // Optional expiry
+  canDownload  Boolean   @default(true)
+  canComment   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  viewCount    Int       @default(0)
+
+  @@index([token])
+  @@index([transcriptId])
+  @@index([expiresAt])
 }
 

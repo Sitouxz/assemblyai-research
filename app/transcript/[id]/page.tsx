@@ -5,6 +5,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import TranscriptViewer from '@/components/TranscriptViewer';
 import InsightsPanel from '@/components/InsightsPanel';
+import ExportMenu from '@/components/ExportMenu';
+import ShareDialog from '@/components/ShareDialog';
 import { TranscriptResponse } from '@/lib/types';
 
 export default function TranscriptDetailPage() {
@@ -14,8 +16,10 @@ export default function TranscriptDetailPage() {
   const id = params.id as string;
   
   const [transcript, setTranscript] = useState<TranscriptResponse | null>(null);
+  const [transcriptTitle, setTranscriptTitle] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -45,6 +49,8 @@ export default function TranscriptDetailPage() {
 
       const data = await response.json();
       
+      setTranscriptTitle(data.title || 'Untitled');
+      
       // Convert database format to TranscriptResponse format
       const transcriptResponse: TranscriptResponse = {
         id: data.assemblyaiId || data.id,
@@ -55,6 +61,10 @@ export default function TranscriptDetailPage() {
         summary: data.insights?.summary || undefined,
         chapters: data.insights?.chapters || undefined,
         sentiment: data.insights?.sentiment || undefined,
+        entities: data.insights?.entities || undefined,
+        iab_categories: data.insights?.iab_categories || undefined,
+        content_safety_labels: data.insights?.content_safety_labels || undefined,
+        auto_highlights_result: data.insights?.auto_highlights || undefined,
         raw: data,
       };
       
@@ -106,21 +116,44 @@ export default function TranscriptDetailPage() {
   return (
     <div className="min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back button */}
-        <button
-          onClick={() => router.push('/history')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to History
-        </button>
+        {/* Header with actions */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => router.push('/history')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to History
+          </button>
+
+          <div className="flex items-center gap-3">
+            <ExportMenu transcriptId={id} transcriptTitle={transcriptTitle} />
+            <button
+              onClick={() => setShowShareDialog(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              Share
+            </button>
+          </div>
+        </div>
 
         <div className="space-y-6">
           <TranscriptViewer transcript={transcript} />
           <InsightsPanel transcript={transcript} />
         </div>
+
+        {/* Share Dialog */}
+        <ShareDialog
+          transcriptId={id}
+          transcriptTitle={transcriptTitle}
+          isOpen={showShareDialog}
+          onClose={() => setShowShareDialog(false)}
+        />
       </div>
     </div>
   );
