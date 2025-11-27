@@ -12,8 +12,45 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
   const [currentTime, setCurrentTime] = useState(0);
   const [highlightedWordIndex, setHighlightedWordIndex] = useState<number | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
+
+  // Process audio URL to use proxy if needed
+  const getProxiedAudioUrl = (url: string | undefined): string | undefined => {
+    if (!url) return undefined;
+    
+    // If it's already a local API URL, return as is
+    if (url.startsWith('/api/')) {
+      console.log('[Audio] Using local API URL:', url);
+      return url;
+    }
+    
+    // If it's an AssemblyAI CDN URL or any external URL, proxy it
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      const proxiedUrl = `/api/audio-proxy?url=${encodeURIComponent(url)}`;
+      console.log('[Audio] Proxying external URL:', url, '→', proxiedUrl);
+      return proxiedUrl;
+    }
+    
+    console.log('[Audio] Using URL as is:', url);
+    return url;
+  };
+
+  const audioUrl = getProxiedAudioUrl(transcript.audioUrl);
+  
+  console.log('[Audio] Original URL:', transcript.audioUrl, '| Processed URL:', audioUrl);
+
+  // Reset audio when transcript changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.load();
+      setCurrentTime(0);
+      setIsPlaying(false);
+      setAudioError(null);
+    }
+  }, [audioUrl]);
 
   const skipTime = (seconds: number) => {
     if (audioRef.current) {
@@ -34,7 +71,10 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
         case ' ':
           e.preventDefault();
           if (audioRef.current.paused) {
-            audioRef.current.play();
+            audioRef.current.play().catch(err => {
+              console.error('Error playing audio:', err);
+              setAudioError('Tidak dapat memutar audio. Coba refresh halaman.');
+            });
           } else {
             audioRef.current.pause();
           }
@@ -64,7 +104,7 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [playbackRate]);
+  }, [playbackRate, setAudioError]);
 
   // Sync audio playback with word highlighting
   useEffect(() => {
@@ -103,15 +143,46 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
       }
     };
 
+    const handlePlay = () => {
+      setIsPlaying(true);
+      setAudioError(null);
+    };
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => setIsPlaying(false);
+    const handleError = (e: Event) => {
+      console.error('Audio error:', e);
+      setIsPlaying(false);
+      setAudioError('Audio tidak dapat dimuat. File mungkin rusak atau tidak didukung.');
+    };
+    const handleCanPlay = () => {
+      setAudioError(null);
+    };
+
     audio.addEventListener('timeupdate', updateTime);
-    return () => audio.removeEventListener('timeupdate', updateTime);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('canplay', handleCanPlay);
+    
+    return () => {
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('canplay', handleCanPlay);
+    };
   }, [transcript.words]);
 
   const handleWordClick = (word: Word) => {
-    if (audioRef.current) {
+    if (audioRef.current && !audioError) {
       audioRef.current.currentTime = word.start / 1000;
       if (audioRef.current.paused) {
-        audioRef.current.play();
+        audioRef.current.play().catch(err => {
+          console.error('Error playing audio:', err);
+          setAudioError('Tidak dapat memutar audio. Coba refresh halaman.');
+        });
       }
     }
   };
@@ -178,32 +249,59 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900">Transcript</h2>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Transcript</h2>
         {transcript.words && (
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             {transcript.words.length} words
           </span>
         )}
       </div>
 
       {/* Audio Player with Controls */}
-      {transcript.audioUrl && (
+      {audioUrl && (
         <div className="mb-6">
           <audio
             ref={audioRef}
-            src={transcript.audioUrl}
+            src={audioUrl}
             className="hidden"
+            preload="metadata"
+            crossOrigin="anonymous"
           >
             Your browser does not support the audio element.
           </audio>
           
+          {/* Audio Error Message */}
+          {audioError && (
+            <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm text-red-800 dark:text-red-400">{audioError}</p>
+                  <button
+                    onClick={() => {
+                      if (audioRef.current) {
+                        audioRef.current.load();
+                        setAudioError(null);
+                      }
+                    }}
+                    className="mt-2 text-xs text-red-700 dark:text-red-300 underline hover:no-underline"
+                  >
+                    Coba muat ulang audio
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Custom Controls */}
-          <div className="bg-gray-100 rounded-lg p-4 space-y-3">
+          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 space-y-3">
             {/* Progress Bar */}
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 w-16">
+              <span className="text-sm text-gray-600 dark:text-gray-400 w-16">
                 {Math.floor(currentTime / 60000)}:{Math.floor((currentTime % 60000) / 1000).toString().padStart(2, '0')}
               </span>
               <input
@@ -220,7 +318,7 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
                 }}
                 className="flex-1"
               />
-              <span className="text-sm text-gray-600 w-16">
+              <span className="text-sm text-gray-600 dark:text-gray-400 w-16">
                 {audioRef.current?.duration ? 
                   `${Math.floor(audioRef.current.duration / 60)}:${Math.floor(audioRef.current.duration % 60).toString().padStart(2, '0')}` 
                   : '0:00'}
@@ -233,7 +331,7 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => skipTime(-10)}
-                  className="p-2 hover:bg-gray-200 rounded transition-colors"
+                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors text-gray-900 dark:text-white"
                   title="Skip back 10s"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,7 +340,7 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
                 </button>
                 <button
                   onClick={() => skipTime(-5)}
-                  className="p-2 hover:bg-gray-200 rounded transition-colors"
+                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors text-gray-900 dark:text-white"
                   title="Skip back 5s"
                 >
                   -5s
@@ -252,21 +350,28 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
               {/* Center: Play/Pause */}
               <button
                 onClick={() => {
-                  if (audioRef.current?.paused) {
-                    audioRef.current?.play();
-                  } else {
-                    audioRef.current?.pause();
+                  if (audioRef.current) {
+                    if (isPlaying) {
+                      audioRef.current.pause();
+                    } else {
+                      audioRef.current.play().catch(err => {
+                        console.error('Error playing audio:', err);
+                        setAudioError('Tidak dapat memutar audio. Coba refresh halaman.');
+                      });
+                    }
                   }
                 }}
-                className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+                disabled={!!audioError}
               >
-                {audioRef.current?.paused !== false ? (
+                {isPlaying ? (
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
                   </svg>
                 ) : (
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                    <path d="M8 5v14l11-7z"/>
                   </svg>
                 )}
               </button>
@@ -275,14 +380,14 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => skipTime(5)}
-                  className="p-2 hover:bg-gray-200 rounded transition-colors"
+                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors text-gray-900 dark:text-white"
                   title="Skip forward 5s"
                 >
                   +5s
                 </button>
                 <button
                   onClick={() => skipTime(10)}
-                  className="p-2 hover:bg-gray-200 rounded transition-colors"
+                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors text-gray-900 dark:text-white"
                   title="Skip forward 10s"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,7 +403,7 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
                       audioRef.current.playbackRate = rate;
                     }
                   }}
-                  className="text-sm px-2 py-1 border border-gray-300 rounded"
+                  className="text-sm px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded"
                 >
                   <option value="0.5">0.5x</option>
                   <option value="0.75">0.75x</option>
@@ -320,30 +425,30 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search transcript..."
-          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 
       {/* Transcript Content */}
       <div
         ref={transcriptRef}
-        className="max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-md border border-gray-200 text-gray-900 leading-relaxed"
+        className="max-h-96 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white leading-relaxed"
       >
         {transcript.text ? (
           renderTranscript()
         ) : (
-          <p className="text-gray-500 italic">No transcript available.</p>
+          <p className="text-gray-500 dark:text-gray-400 italic">No transcript available.</p>
         )}
       </div>
 
       {/* Info */}
       <div className="mt-4 space-y-1">
         {transcript.words && (
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
             Click on any word to jump to that timestamp in the audio.
           </div>
         )}
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           Keyboard shortcuts: Space (play/pause), ←/→ (skip 5s), ↑/↓ (speed)
         </div>
       </div>

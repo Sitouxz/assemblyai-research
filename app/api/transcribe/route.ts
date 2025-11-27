@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { client } from '@/lib/assemblyai';
+import { getAssemblyAIClient } from '@/lib/assemblyai';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { TranscriptionOptions, TranscriptResponse } from '@/lib/types';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
+import { randomBytes } from 'crypto';
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,14 +32,51 @@ export async function POST(req: NextRequest) {
     const options: TranscriptionOptions = optionsJson ? JSON.parse(optionsJson) : {};
 
     let audioSource: string | Buffer;
-    const sourceType = file ? 'file' : 'url';
-
+    let savedAudioUrl: string | undefined;
+    
+    // Determine source type based on input
+    // Check if it's a recording by looking at the file name or type
+    let sourceType: 'upload' | 'url' | 'recording' = 'upload';
     if (file) {
+      // Check if this is a recorded file (from browser recording)
+      if (fileName?.includes('recording') || file.type.includes('webm')) {
+        sourceType = 'recording';
+      } else {
+        sourceType = 'upload';
+      }
       // Convert File to Buffer
       const bytes = await file.arrayBuffer();
       audioSource = Buffer.from(bytes);
+      
+      // Save file for playback (only in development)
+      // In production, this won't work on serverless platforms
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      if (isDevelopment) {
+        try {
+          const uploadsDir = join(process.cwd(), 'uploads');
+          if (!existsSync(uploadsDir)) {
+            await mkdir(uploadsDir, { recursive: true });
+          }
+          
+          // Generate unique ID for file
+          const fileId = randomBytes(16).toString('hex');
+          const extension = file.name.split('.').pop() || 'webm';
+          const filePath = join(uploadsDir, `${fileId}.${extension}`);
+          
+          await writeFile(filePath, audioSource);
+          savedAudioUrl = `/api/audio/${fileId}`;
+          console.log('[Transcribe] Saved audio locally:', filePath);
+        } catch (saveError) {
+          console.error('[Transcribe] Failed to save audio file:', saveError);
+          // Continue without saved audio URL
+        }
+      } else {
+        console.log('[Transcribe] Skipping local file save in production (serverless)');
+      }
     } else if (url) {
+      sourceType = 'url';
       audioSource = url;
+      savedAudioUrl = url;
     } else {
       return NextResponse.json(
         { error: 'Invalid audio source' },
@@ -89,6 +130,9 @@ export async function POST(req: NextRequest) {
     }
     if (options.custom_prompt) sdkOptions.prompt = options.custom_prompt;
 
+    // Get the appropriate AssemblyAI client (user key or app key)
+    const client = await getAssemblyAIClient(session?.user?.id);
+
     // Transcribe using AssemblyAI SDK
     // The SDK handles upload and polling internally
     const transcript = await client.transcripts.transcribe(sdkOptions);
@@ -100,6 +144,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Determine final audio URL
+    let finalAudioUrl = savedAudioUrl;
+    
+    // Check if we're in production environment
+    const isProduction = process.env.NODE_ENV === 'production' || 
+                         process.env.VERCEL || 
+                         process.env.RAILWAY_ENVIRONMENT;
+    
+    // In production, prefer AssemblyAI's CDN URL (with proxy) over local storage
+    // In development, use local storage if available
+    if (isProduction) {
+      // Production: Always use AssemblyAI's CDN with proxy
+      if (transcript.audio_url) {
+        finalAudioUrl = `/api/audio-proxy?url=${encodeURIComponent(transcript.audio_url)}`;
+      } else if (url) {
+        finalAudioUrl = `/api/audio-proxy?url=${encodeURIComponent(url)}`;
+      }
+    } else {
+      // Development: Use local file if available, otherwise proxy
+      if (!finalAudioUrl && transcript.audio_url) {
+        finalAudioUrl = `/api/audio-proxy?url=${encodeURIComponent(transcript.audio_url)}`;
+      } else if (!finalAudioUrl && url) {
+        finalAudioUrl = `/api/audio-proxy?url=${encodeURIComponent(url)}`;
+      }
+    }
+    
     // Normalize response with all new fields
     const normalizedResponse: TranscriptResponse = {
       id: transcript.id,
@@ -108,7 +178,7 @@ export async function POST(req: NextRequest) {
         ...word,
         speaker: word.speaker ?? undefined,
       })),
-      audioUrl: url || transcript.audio_url || undefined,
+      audioUrl: finalAudioUrl,
       summary: transcript.summary || undefined,
       chapters: transcript.chapters || undefined,
       sentiment: transcript.sentiment_analysis_results || undefined,
@@ -140,8 +210,9 @@ export async function POST(req: NextRequest) {
         data: {
           userId: session.user.id,
           title,
-          audioUrl: url || transcript.audio_url || null,
-          audioSource: sourceType,
+          audioUrl: finalAudioUrl || null,
+          audioSource: sourceType, // Legacy field
+          sourceType: sourceType,  // New field for source tracking
           text: transcript.text || '',
           duration: transcript.audio_duration || null,
           status: 'completed',

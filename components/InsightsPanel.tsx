@@ -54,9 +54,9 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
 
   if (!hasSummary && !hasChapters && !hasSentiment && !hasEntities && !hasHighlights && !hasContentSafety && !hasDbId) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Insights</h2>
-        <p className="text-gray-500 text-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Insights</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
           No insights available. Enable advanced features in the upload settings to see insights here.
         </p>
       </div>
@@ -64,17 +64,17 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors">
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="flex -mb-px">
           {hasSummary && (
             <button
               onClick={() => setActiveTab('summary')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'summary'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               Summary
@@ -85,8 +85,8 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
               onClick={() => setActiveTab('chapters')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'chapters'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               Chapters / Topics
@@ -97,8 +97,8 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
               onClick={() => setActiveTab('sentiment')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'sentiment'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               Sentiment
@@ -109,8 +109,8 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
               onClick={() => setActiveTab('entities')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'entities'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               Entities
@@ -121,8 +121,8 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
               onClick={() => setActiveTab('highlights')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'highlights'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               Highlights
@@ -133,8 +133,8 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
               onClick={() => setActiveTab('content_safety')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'content_safety'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               Content Safety
@@ -145,8 +145,8 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
               onClick={() => setActiveTab('lemur')}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'lemur'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
             >
               AI Insights
@@ -160,8 +160,8 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
         {/* Summary Tab */}
         {activeTab === 'summary' && hasSummary && (
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Summary</h3>
-            <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Summary</h3>
+            <div className="prose max-w-none text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
               {transcript.summary}
             </div>
           </div>
@@ -170,24 +170,24 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
         {/* Chapters Tab */}
         {activeTab === 'chapters' && hasChapters && (
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Chapters / Topics</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Chapters / Topics</h3>
             <div className="space-y-4">
               {transcript.chapters?.map((chapter, index) => (
                 <div
                   key={index}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900">{chapter.headline}</h4>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    <h4 className="font-semibold text-gray-900 dark:text-white">{chapter.headline}</h4>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                       {formatTimestamp(chapter.start)} - {formatTimestamp(chapter.end)}
                     </span>
                   </div>
                   {chapter.summary && (
-                    <p className="text-sm text-gray-700 mt-2">{chapter.summary}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">{chapter.summary}</p>
                   )}
                   {chapter.gist && (
-                    <p className="text-xs text-gray-500 mt-2 italic">Gist: {chapter.gist}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">Gist: {chapter.gist}</p>
                   )}
                 </div>
               ))}
@@ -198,7 +198,7 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
         {/* Sentiment Tab */}
         {activeTab === 'sentiment' && hasSentiment && (
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Sentiment Analysis</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Sentiment Analysis</h3>
             <div className="space-y-3">
               {transcript.sentiment?.map((item, index) => (
                 <div
@@ -225,32 +225,32 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
 
         {/* Empty state for active tab */}
         {activeTab === 'summary' && !hasSummary && (
-          <p className="text-gray-500 text-sm">No summary available.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No summary available.</p>
         )}
         {activeTab === 'chapters' && !hasChapters && (
-          <p className="text-gray-500 text-sm">No chapters available.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No chapters available.</p>
         )}
         {activeTab === 'sentiment' && !hasSentiment && (
-          <p className="text-gray-500 text-sm">No sentiment analysis available.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No sentiment analysis available.</p>
         )}
 
         {/* Entities Tab */}
         {activeTab === 'entities' && hasEntities && (
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Detected Entities</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Detected Entities</h3>
             <div className="space-y-3">
               {transcript.entities?.map((entity, index) => (
                 <div
                   key={index}
-                  className="border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-1">
-                    <span className="font-medium text-gray-900">{entity.text}</span>
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-medium">
+                    <span className="font-medium text-gray-900 dark:text-white">{entity.text}</span>
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 px-2 py-1 rounded font-medium">
                       {entity.entity_type}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     {formatTimestamp(entity.start)} - {formatTimestamp(entity.end)}
                   </span>
                 </div>
@@ -262,27 +262,27 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
         {/* Highlights Tab */}
         {activeTab === 'highlights' && hasHighlights && (
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Auto Highlights</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Auto Highlights</h3>
             <div className="space-y-3">
               {transcript.auto_highlights_result?.map((highlight, index) => (
                 <div
                   key={index}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-gray-900">{highlight.text}</h4>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span className="bg-gray-100 px-2 py-1 rounded">
+                    <h4 className="font-medium text-gray-900 dark:text-white">{highlight.text}</h4>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                         Rank: {highlight.rank}
                       </span>
-                      <span className="bg-gray-100 px-2 py-1 rounded">
+                      <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                         {highlight.count} mention{highlight.count !== 1 ? 's' : ''}
                       </span>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {highlight.timestamps.map((ts, idx) => (
-                      <span key={idx} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                      <span key={idx} className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded">
                         {formatTimestamp(ts.start)}
                       </span>
                     ))}
@@ -296,14 +296,14 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
         {/* Content Safety Tab */}
         {activeTab === 'content_safety' && hasContentSafety && (
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Content Safety Labels</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Content Safety Labels</h3>
             <div className="space-y-3">
               {transcript.content_safety_labels?.map((item, index) => (
                 <div
                   key={index}
-                  className="border border-gray-200 rounded-lg p-4"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                 >
-                  <p className="text-sm text-gray-900 mb-3">{item.text}</p>
+                  <p className="text-sm text-gray-900 dark:text-white mb-3">{item.text}</p>
                   <div className="space-y-2">
                     {item.labels.map((label, idx) => {
                       const getSeverityColor = (severity: number) => {
@@ -328,7 +328,7 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
                       );
                     })}
                   </div>
-                  <span className="text-xs text-gray-500 mt-2 block">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 mt-2 block">
                     {formatTimestamp(item.timestamp.start)} - {formatTimestamp(item.timestamp.end)}
                   </span>
                 </div>

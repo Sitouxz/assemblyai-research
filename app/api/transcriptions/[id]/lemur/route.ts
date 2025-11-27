@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { client } from '@/lib/assemblyai';
+import { getAssemblyAIClient } from '@/lib/assemblyai';
 
 // POST /api/transcriptions/[id]/lemur - Generate LeMUR insights
 export async function POST(
@@ -42,6 +42,9 @@ export async function POST(
 
     const body = await req.json();
     const { type, question, context } = body;
+
+    // Get the appropriate AssemblyAI client (user key or app key)
+    const client = await getAssemblyAIClient(session.user.id);
 
     let result: any;
 

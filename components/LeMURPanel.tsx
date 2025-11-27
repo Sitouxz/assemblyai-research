@@ -52,12 +52,12 @@ export default function LeMURPanel({ transcriptId, onGenerate }: LeMURPanelProps
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 transition-colors">
       <div className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           AI-Powered Insights (LeMUR)
         </h3>
-        <p className="text-sm text-gray-600 mb-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
           Use AssemblyAI's LeMUR to generate summaries, extract action items, answer questions, and more.
         </p>
 
@@ -69,7 +69,7 @@ export default function LeMURPanel({ transcriptId, onGenerate }: LeMURPanelProps
               handleGenerate('summary');
             }}
             disabled={isLoading}
-            className="px-4 py-3 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             📝 Generate Summary
           </button>
@@ -79,7 +79,7 @@ export default function LeMURPanel({ transcriptId, onGenerate }: LeMURPanelProps
               handleGenerate('action_items');
             }}
             disabled={isLoading}
-            className="px-4 py-3 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-3 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ✅ Extract Action Items
           </button>
@@ -89,14 +89,14 @@ export default function LeMURPanel({ transcriptId, onGenerate }: LeMURPanelProps
               handleGenerate('key_points');
             }}
             disabled={isLoading}
-            className="px-4 py-3 bg-purple-50 text-purple-700 rounded-md hover:bg-purple-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-3 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             💡 Key Points
           </button>
           <button
             onClick={() => setActiveType('qa')}
             disabled={isLoading}
-            className="px-4 py-3 bg-orange-50 text-orange-700 rounded-md hover:bg-orange-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-3 bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-md hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ❓ Ask a Question
           </button>
@@ -104,8 +104,8 @@ export default function LeMURPanel({ transcriptId, onGenerate }: LeMURPanelProps
 
         {/* Q&A Interface */}
         {activeType === 'qa' && (
-          <div className="border border-gray-200 rounded-md p-4 mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-md p-4 mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Ask a question about the transcript
             </label>
             <input
@@ -113,7 +113,7 @@ export default function LeMURPanel({ transcriptId, onGenerate }: LeMURPanelProps
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="e.g., What were the main topics discussed?"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-md mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               disabled={isLoading}
             />
             <button
@@ -128,8 +128,8 @@ export default function LeMURPanel({ transcriptId, onGenerate }: LeMURPanelProps
 
         {/* Custom Prompt Interface */}
         {activeType === 'custom' && (
-          <div className="border border-gray-200 rounded-md p-4 mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-md p-4 mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Custom task prompt
             </label>
             <textarea
@@ -137,7 +137,7 @@ export default function LeMURPanel({ transcriptId, onGenerate }: LeMURPanelProps
               onChange={(e) => setCustomPrompt(e.target.value)}
               placeholder="e.g., Identify all technical terms mentioned and provide brief explanations"
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-md mb-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
               disabled={isLoading}
             />
             <button
@@ -154,41 +154,41 @@ export default function LeMURPanel({ transcriptId, onGenerate }: LeMURPanelProps
         {isLoading && (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-600">Generating insights...</span>
+            <span className="ml-3 text-gray-600 dark:text-gray-400">Generating insights...</span>
           </div>
         )}
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 mb-4">
+            <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
           </div>
         )}
 
         {/* Result Display */}
         {result && !isLoading && (
-          <div className="border border-gray-200 rounded-md p-4 bg-gray-50">
-            <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <span className="text-green-600">✓</span> Result
+          <div className="border border-gray-200 dark:border-gray-700 rounded-md p-4 bg-gray-50 dark:bg-gray-900">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <span className="text-green-600 dark:text-green-400">✓</span> Result
             </h4>
             <div className="prose prose-sm max-w-none">
               {activeType === 'qa' && result.response ? (
                 <div>
-                  <p className="text-gray-900 whitespace-pre-wrap">{result.response[0].answer}</p>
+                  <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{result.response[0].answer}</p>
                 </div>
               ) : activeType === 'action_items' && result.response ? (
                 <div className="space-y-2">
                   {result.response.split('\n').filter((item: string) => item.trim()).map((item: string, idx: number) => (
                     <div key={idx} className="flex items-start gap-2">
-                      <span className="text-blue-600">•</span>
-                      <span className="text-gray-900">{item.replace(/^[-•]\s*/, '')}</span>
+                      <span className="text-blue-600 dark:text-blue-400">•</span>
+                      <span className="text-gray-900 dark:text-gray-100">{item.replace(/^[-•]\s*/, '')}</span>
                     </div>
                   ))}
                 </div>
               ) : result.response ? (
-                <p className="text-gray-900 whitespace-pre-wrap">{result.response}</p>
+                <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{result.response}</p>
               ) : (
-                <pre className="text-xs text-gray-700 whitespace-pre-wrap">{JSON.stringify(result, null, 2)}</pre>
+                <pre className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{JSON.stringify(result, null, 2)}</pre>
               )}
             </div>
           </div>
@@ -197,7 +197,7 @@ export default function LeMURPanel({ transcriptId, onGenerate }: LeMURPanelProps
         {/* Advanced Options Toggle */}
         <button
           onClick={() => setActiveType(activeType === 'custom' ? null : 'custom')}
-          className="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
           disabled={isLoading}
         >
           {activeType === 'custom' ? 'Hide' : 'Show'} Custom Prompt

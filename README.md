@@ -16,6 +16,8 @@ A **production-ready, full-featured transcription and analysis platform** built 
 - Secure password hashing (bcrypt)
 - Per-user transcript isolation
 - Session-based authentication
+- **Bring Your Own API Key** - Users can provide their own AssemblyAI API key
+- AES-256-GCM encryption for stored API keys
 
 ### 🎯 Advanced Transcription (20+ Features)
 - **Speaker Diarization** - Identify and label different speakers
@@ -210,11 +212,14 @@ assemblyai-research/
 ASSEMBLYAI_API_KEY=your_api_key_here
 DATABASE_URL=file:./dev.db  # or postgres://...
 NEXTAUTH_SECRET=your_secret_here  # Generate: openssl rand -base64 32
+ENCRYPTION_KEY=your_encryption_key_here  # Generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 # Optional (for production)
 NEXTAUTH_URL=https://yourdomain.com
 NODE_ENV=production
 ```
+
+**Important:** The `ENCRYPTION_KEY` is used to encrypt user API keys at rest. Generate a secure 64-character hex string (32 bytes) using the command provided above.
 
 ### Database
 
@@ -320,6 +325,8 @@ npm start
 - ✅ SQL injection protection (Prisma)
 - ✅ PII redaction support
 - ✅ Secure share tokens (cryptographic)
+- ✅ API key encryption (AES-256-GCM)
+- ✅ User API key isolation
 
 ---
 
@@ -365,6 +372,11 @@ npm run build
 - `POST /api/transcriptions/[id]/annotations` - Create annotation
 - `GET /api/transcriptions/[id]/bookmarks` - List bookmarks
 - `POST /api/transcriptions/[id]/bookmarks` - Create bookmark
+
+### User Settings
+- `GET /api/user/api-keys/assemblyai` - Get user API key status
+- `POST /api/user/api-keys/assemblyai` - Save/update user API key
+- `DELETE /api/user/api-keys/assemblyai` - Remove user API key
 
 ---
 

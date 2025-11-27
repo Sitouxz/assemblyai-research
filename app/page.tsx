@@ -4,13 +4,18 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import UploadCard from '@/components/UploadCard';
+import RecordCard from '@/components/RecordCard';
+import LiveTranscriptionCard from '@/components/LiveTranscriptionCard';
 import StatusIndicator from '@/components/StatusIndicator';
 import TranscriptViewer from '@/components/TranscriptViewer';
 import InsightsPanel from '@/components/InsightsPanel';
 import HistorySidebar from '@/components/HistorySidebar';
 import JsonViewer from '@/components/JsonViewer';
 import PatchNotes from '@/components/PatchNotes';
+import ApiKeyIndicator from '@/components/ApiKeyIndicator';
 import { TranscriptResponse, TranscriptionStatus, HistoryItem } from '@/lib/types';
+
+type TranscriptionMode = 'upload' | 'record' | 'live';
 
 export default function Home() {
   const { data: session } = useSession();
@@ -19,6 +24,7 @@ export default function Home() {
   const [status, setStatus] = useState<TranscriptionStatus>(TranscriptionStatus.IDLE);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [mode, setMode] = useState<TranscriptionMode>('upload');
 
   // Check API health on mount
   useEffect(() => {
@@ -133,20 +139,25 @@ export default function Home() {
   return (
     <main className="min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* API Key Indicator */}
+        <div className="mb-6">
+          <ApiKeyIndicator />
+        </div>
+
         {/* Sign-up prompt for guest users */}
         {!session && (
-          <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 transition-colors">
+          <div className="mb-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-colors">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
-                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
                   Sign up to save your transcripts
                 </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                   Create a free account to access your transcripts from any device and keep them organized.
                 </p>
                 <div className="flex gap-3">
@@ -189,16 +200,65 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Content */}
           <section className="lg:col-span-3 space-y-6">
-            <UploadCard
-              onTranscribe={handleTranscribe}
-              isProcessing={status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.UPLOADING}
-            />
+            {/* Tab Navigation */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-2 transition-colors">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setMode('upload')}
+                  className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
+                    mode === 'upload'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  Upload / URL
+                </button>
+                <button
+                  onClick={() => setMode('record')}
+                  className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
+                    mode === 'record'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  Record
+                </button>
+                <button
+                  onClick={() => setMode('live')}
+                  className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
+                    mode === 'live'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  Live
+                </button>
+              </div>
+            </div>
 
-            {status !== TranscriptionStatus.IDLE && (
+            {/* Mode-specific Card */}
+            {mode === 'upload' && (
+              <UploadCard
+                onTranscribe={handleTranscribe}
+                isProcessing={status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.UPLOADING}
+              />
+            )}
+            {mode === 'record' && (
+              <RecordCard
+                onTranscribe={handleTranscribe}
+                isProcessing={status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.UPLOADING}
+              />
+            )}
+            {mode === 'live' && (
+              <LiveTranscriptionCard />
+            )}
+
+            {/* Status and Results (only for upload/record modes) */}
+            {mode !== 'live' && status !== TranscriptionStatus.IDLE && (
               <StatusIndicator status={status} error={error} />
             )}
 
-            {transcript && (
+            {mode !== 'live' && transcript && (
               <>
                 <TranscriptViewer transcript={transcript} />
                 <InsightsPanel transcript={transcript} />

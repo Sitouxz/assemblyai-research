@@ -24,6 +24,7 @@ model User {
   bookmarks       Bookmark[]
   comments        Comment[]
   folders         Folder[]
+  apiKeys         UserApiKey[]
 }
 
 model Transcript {
@@ -32,7 +33,8 @@ model Transcript {
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   title           String
   audioUrl        String?
-  audioSource     String?  // 'file' or 'url'
+  audioSource     String?  // Deprecated: use sourceType instead
+  sourceType      String?  // 'upload' | 'url' | 'recording' | 'stream'
   text            String
   duration        Float?
   status          String           @default("completed")
@@ -184,5 +186,19 @@ model Comment {
   @@index([userId])
   @@index([parentId])
   @@index([startMs])
+}
+
+model UserApiKey {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  provider     String   // e.g. "assemblyai"
+  label        String?  // optional label such as "My AssemblyAI key"
+  encryptedKey String   // encrypted API key, not plain text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, provider])
+  @@unique([userId, provider]) // One key per provider per user
 }
 

@@ -68,9 +68,9 @@ export default function StatusIndicator({ status, error }: StatusIndicatorProps)
                        status === TranscriptionStatus.QUEUED;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900">Status</h2>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Status</h2>
         <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
           <span className="mr-2">{config.icon}</span>
           {config.label}
@@ -90,14 +90,14 @@ export default function StatusIndicator({ status, error }: StatusIndicatorProps)
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
                     isActive
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-600'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                   } ${isCurrent && isProcessing ? 'animate-pulse' : ''}`}
                 >
                   {step.num}
                 </div>
                 <span
                   className={`text-xs mt-2 text-center ${
-                    isActive ? 'text-gray-900 font-medium' : 'text-gray-500'
+                    isActive ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400'
                   }`}
                 >
                   {step.label}
@@ -108,7 +108,7 @@ export default function StatusIndicator({ status, error }: StatusIndicatorProps)
         </div>
         
         {/* Progress Line */}
-        <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 -z-10">
+        <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700 -z-10">
           <div
             className={`h-full transition-all duration-300 ${
               status === TranscriptionStatus.ERROR
@@ -126,7 +126,7 @@ export default function StatusIndicator({ status, error }: StatusIndicatorProps)
 
       {/* Progress Message */}
       {isProcessing && (
-        <div className="mt-4 flex items-center gap-2 text-gray-600">
+        <div className="mt-4 flex items-center gap-2 text-gray-600 dark:text-gray-400">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500" />
           <p className="text-sm">
             {status === TranscriptionStatus.UPLOADING && 'Uploading your file...'}
@@ -138,9 +138,9 @@ export default function StatusIndicator({ status, error }: StatusIndicatorProps)
 
       {/* Error Message */}
       {status === TranscriptionStatus.ERROR && error && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-800 font-medium">Error:</p>
-          <p className="text-sm text-red-700 mt-1">{error}</p>
+        <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+          <p className="text-sm text-red-800 dark:text-red-400 font-medium">Error:</p>
+          <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
         </div>
       )}
     </div>

@@ -118,5 +118,22 @@ export enum TranscriptionStatus {
   PROCESSING = 'processing',
   COMPLETED = 'completed',
   ERROR = 'error',
+  RECORDING = 'recording',
+  STREAMING = 'streaming',
+}
+
+export type SourceType = 'upload' | 'url' | 'recording' | 'stream';
+
+// Types for live transcription streaming
+export interface StreamingTurn {
+  id: string;
+  text: string;
+  endOfTurn: boolean;
+  createdAt: Date;
+}
+
+export interface StreamingTokenResponse {
+  token: string;
+  expiresInSeconds: number;
 }
 
