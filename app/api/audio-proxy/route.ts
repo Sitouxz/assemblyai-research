@@ -95,7 +95,10 @@ export async function GET(req: NextRequest) {
     console.log('[Audio Proxy] Content type:', contentType);
 
     // Stream it back to the client
-    return new NextResponse(audioBuffer, {
+    // Convert Buffer to Uint8Array for NextResponse compatibility
+    const uint8Array = new Uint8Array(audioBuffer);
+    
+    return new NextResponse(uint8Array, {
       headers: {
         'Content-Type': contentType,
         'Content-Length': audioBuffer.length.toString(),
