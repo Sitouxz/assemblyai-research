@@ -109,9 +109,28 @@ export default function Home() {
         body: formData,
       });
 
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      const isJson = contentType && contentType.includes('application/json');
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Transcription failed');
+        // Handle specific error codes
+        if (response.status === 413) {
+          throw new Error('File too large! Maximum file size is 4MB. Please use a smaller file or upload via URL.');
+        }
+        
+        if (isJson) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Transcription failed');
+        } else {
+          // If not JSON, get text response (might be HTML error page)
+          const errorText = await response.text();
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+      }
+
+      if (!isJson) {
+        throw new Error('Invalid response format from server');
       }
 
       const data: TranscriptResponse = await response.json();
