@@ -52,6 +52,16 @@ export async function runAzurePronunciationAssessment(
 
     let audioConfig: any;
     
+    // Helper function to convert Buffer to ArrayBuffer
+    const bufferToArrayBuffer = (buffer: Buffer): ArrayBuffer => {
+      const arrayBuffer = new ArrayBuffer(buffer.length);
+      const view = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < buffer.length; i++) {
+        view[i] = buffer[i];
+      }
+      return arrayBuffer;
+    };
+
     // Handle audio input (URL or Buffer)
     if (typeof audioUrlOrBuffer === 'string') {
       // For URLs, we need to download the audio first
@@ -59,14 +69,18 @@ export async function runAzurePronunciationAssessment(
       
       // Create push stream for audio
       const pushStream = sdk.AudioInputStream.createPushStream();
-      pushStream.write(audioBuffer);
+      // Convert Buffer to ArrayBuffer
+      const arrayBuffer = bufferToArrayBuffer(audioBuffer);
+      pushStream.write(arrayBuffer);
       pushStream.close();
       
       audioConfig = sdk.AudioConfig.fromStreamInput(pushStream);
     } else {
       // For Buffer, create push stream
       const pushStream = sdk.AudioInputStream.createPushStream();
-      pushStream.write(audioUrlOrBuffer);
+      // Convert Buffer to ArrayBuffer
+      const arrayBuffer = bufferToArrayBuffer(audioUrlOrBuffer);
+      pushStream.write(arrayBuffer);
       pushStream.close();
       
       audioConfig = sdk.AudioConfig.fromStreamInput(pushStream);

@@ -41,9 +41,16 @@ export async function runHumeEmotionAnalysis(
     // In production, you might want to trim it to maxDurationSeconds
     // This requires ffmpeg or another audio processing library
 
+    // Convert Buffer to ArrayBuffer for Blob
+    const arrayBuffer = new ArrayBuffer(audioBuffer.length);
+    const view = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < audioBuffer.length; i++) {
+      view[i] = audioBuffer[i];
+    }
+
     // Create form data for Hume API
     const formData = new FormData();
-    const blob = new Blob([audioBuffer], { type: 'audio/wav' });
+    const blob = new Blob([arrayBuffer], { type: 'audio/wav' });
     formData.append('file', blob, 'audio.wav');
     
     // Hume API expects JSON configuration as separate fields or query params

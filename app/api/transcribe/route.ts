@@ -8,6 +8,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { randomBytes } from 'crypto';
+import { Prisma } from '@prisma/client';
 
 export async function POST(req: NextRequest) {
   try {
@@ -237,7 +238,7 @@ export async function POST(req: NextRequest) {
           assemblyaiId: transcript.id,
           config: JSON.stringify(options),
           insights: Object.keys(insights).length > 0 ? JSON.stringify(insights) : null,
-          deliveryMetrics: deliveryMetrics || null, // Store delivery metrics
+          deliveryMetrics: deliveryMetrics ? (deliveryMetrics as unknown as Prisma.InputJsonValue) : Prisma.JsonNull, // Store delivery metrics
         },
       });
 
