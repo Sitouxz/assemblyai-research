@@ -3,6 +3,7 @@ import { getAssemblyAIClient } from '@/lib/assemblyai';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { TranscriptionOptions, TranscriptResponse } from '@/lib/types';
+import { computeDeliveryMetricsFromAssemblyAI } from '@/lib/deliveryMetrics';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
@@ -170,6 +171,19 @@ export async function POST(req: NextRequest) {
       }
     }
     
+    // Compute delivery metrics (FREE - from AssemblyAI data only)
+    let deliveryMetrics = null;
+    try {
+      deliveryMetrics = computeDeliveryMetricsFromAssemblyAI(transcript);
+      console.log('[Transcribe] Computed delivery metrics:', {
+        wpm: deliveryMetrics.overallWpm,
+        fluencyScore: deliveryMetrics.fluencyScore,
+      });
+    } catch (metricsError) {
+      console.error('[Transcribe] Failed to compute delivery metrics:', metricsError);
+      // Don't fail the whole request if metrics calculation fails
+    }
+
     // Normalize response with all new fields
     const normalizedResponse: TranscriptResponse = {
       id: transcript.id,
@@ -187,7 +201,11 @@ export async function POST(req: NextRequest) {
       content_safety_labels: transcript.content_safety_labels?.results || undefined,
       auto_highlights_result: transcript.auto_highlights_result?.results || undefined,
       speakers: transcript.speakers_expected || undefined,
-      raw: transcript,
+      raw: {
+        ...transcript,
+        // Include computed delivery metrics in raw for immediate access
+        deliveryMetrics: deliveryMetrics,
+      },
     };
 
     // Save to database if user is authenticated
@@ -219,6 +237,7 @@ export async function POST(req: NextRequest) {
           assemblyaiId: transcript.id,
           config: JSON.stringify(options),
           insights: Object.keys(insights).length > 0 ? JSON.stringify(insights) : null,
+          deliveryMetrics: deliveryMetrics || null, // Store delivery metrics
         },
       });
 

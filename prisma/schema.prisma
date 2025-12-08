@@ -41,6 +41,12 @@ model Transcript {
   assemblyaiId    String?
   config          String?  // JSON string for TranscriptionConfig
   insights        String?  // JSON string for chapters, sentiment, etc.
+  
+  // Speaking performance analytics
+  deliveryMetrics Json?    // WPM, silence %, pauses, talk-time per speaker, filler rate, simple fluency
+  pronunciation   Json?    // Azure Pronunciation Assessment raw result / normalized scores
+  voiceEmotion    Json?    // Hume voice emotion / prosody timeline
+  
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   shareLinks      ShareLink[]

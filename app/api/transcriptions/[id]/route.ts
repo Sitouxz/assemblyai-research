@@ -36,6 +36,9 @@ export async function GET(
       ...transcript,
       config: transcript.config ? JSON.parse(transcript.config) : null,
       insights: transcript.insights ? JSON.parse(transcript.insights) : null,
+      deliveryMetrics: transcript.deliveryMetrics || null,
+      pronunciation: transcript.pronunciation || null,
+      voiceEmotion: transcript.voiceEmotion || null,
     };
 
     return NextResponse.json(response);
@@ -102,6 +105,9 @@ export async function PUT(
       ...transcript,
       config: transcript.config ? JSON.parse(transcript.config) : null,
       insights: transcript.insights ? JSON.parse(transcript.insights) : null,
+      deliveryMetrics: transcript.deliveryMetrics || null,
+      pronunciation: transcript.pronunciation || null,
+      voiceEmotion: transcript.voiceEmotion || null,
     };
 
     return NextResponse.json(response);

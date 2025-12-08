@@ -1,16 +1,27 @@
 'use client';
 
-import { useState } from 'react';
-import { TranscriptResponse } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { TranscriptResponse, DeliveryMetrics, PronunciationSummary, VoiceEmotionSummary } from '@/lib/types';
 import LeMURPanel from './LeMURPanel';
+import DeliveryInsightsTab from './DeliveryInsightsTab';
+import PronunciationTab from './PronunciationTab';
+import EmotionTab from './EmotionTab';
 
 interface InsightsPanelProps {
   transcript: TranscriptResponse;
+  deliveryMetrics?: DeliveryMetrics | null;
+  pronunciation?: PronunciationSummary | null;
+  voiceEmotion?: VoiceEmotionSummary | null;
 }
 
-type TabType = 'summary' | 'chapters' | 'sentiment' | 'entities' | 'highlights' | 'content_safety' | 'lemur';
+type TabType = 'summary' | 'chapters' | 'sentiment' | 'entities' | 'highlights' | 'content_safety' | 'lemur' | 'delivery' | 'pronunciation' | 'emotion';
 
-export default function InsightsPanel({ transcript }: InsightsPanelProps) {
+export default function InsightsPanel({ 
+  transcript,
+  deliveryMetrics,
+  pronunciation,
+  voiceEmotion,
+}: InsightsPanelProps) {
   const hasSummary = !!transcript.summary;
   const hasChapters = !!transcript.chapters && transcript.chapters.length > 0;
   const hasSentiment = !!transcript.sentiment && transcript.sentiment.length > 0;
@@ -18,9 +29,35 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
   const hasHighlights = !!transcript.auto_highlights_result && transcript.auto_highlights_result.length > 0;
   const hasContentSafety = !!transcript.content_safety_labels && transcript.content_safety_labels.length > 0;
   const hasDbId = !!transcript.dbId; // LeMUR needs database ID
+  
+  // Speaking performance analytics
+  const hasDelivery = !!deliveryMetrics;
+  const hasPronunciation = !!pronunciation;
+  const hasEmotion = !!voiceEmotion || hasSentiment; // Emotion tab shows text sentiment + voice emotion
+  
+  // Feature flags - fetch from API to check if services are enabled
+  const [isAzureEnabled, setIsAzureEnabled] = useState(false);
+  const [isHumeEnabled, setIsHumeEnabled] = useState(false);
+  const [featuresLoaded, setFeaturesLoaded] = useState(false);
+
+  useEffect(() => {
+    // Fetch feature flags from server
+    fetch('/api/config/features')
+      .then(res => res.json())
+      .then(data => {
+        setIsAzureEnabled(data.azurePronunciation || false);
+        setIsHumeEnabled(data.humeEmotion || false);
+        setFeaturesLoaded(true);
+      })
+      .catch(err => {
+        console.error('Failed to fetch feature config:', err);
+        setFeaturesLoaded(true); // Continue with features disabled
+      });
+  }, []);
 
   // Determine default tab
   const getDefaultTab = (): TabType => {
+    if (hasDelivery) return 'delivery'; // Prioritize new speaking analytics
     if (hasSummary) return 'summary';
     if (hasChapters) return 'chapters';
     if (hasSentiment) return 'sentiment';
@@ -42,17 +79,22 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
   const getSentimentColor = (sentiment: string): string => {
     switch (sentiment) {
       case 'POSITIVE':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800';
       case 'NEGATIVE':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400 border-red-200 dark:border-red-800';
       case 'NEUTRAL':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700';
     }
   };
 
-  if (!hasSummary && !hasChapters && !hasSentiment && !hasEntities && !hasHighlights && !hasContentSafety && !hasDbId) {
+  // Always show panel since we now have delivery metrics
+  const hasAnyInsights = hasSummary || hasChapters || hasSentiment || hasEntities || 
+                         hasHighlights || hasContentSafety || hasDbId || 
+                         hasDelivery || hasPronunciation || hasEmotion;
+  
+  if (!hasAnyInsights) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Insights</h2>
@@ -67,7 +109,46 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md transition-colors">
       {/* Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="flex -mb-px">
+        <nav className="flex -mb-px overflow-x-auto">
+          {/* Speaking Performance Tabs */}
+          {hasDelivery && (
+            <button
+              onClick={() => setActiveTab('delivery')}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === 'delivery'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              📊 Delivery
+            </button>
+          )}
+          {(hasPronunciation || (featuresLoaded && isAzureEnabled)) && (
+            <button
+              onClick={() => setActiveTab('pronunciation')}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === 'pronunciation'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              🎤 Pronunciation
+            </button>
+          )}
+          {(hasEmotion || (featuresLoaded && isHumeEnabled)) && (
+            <button
+              onClick={() => setActiveTab('emotion')}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === 'emotion'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              🎭 Emotion
+            </button>
+          )}
+          
+          {/* Standard Tabs */}
           {hasSummary && (
             <button
               onClick={() => setActiveTab('summary')}
@@ -157,6 +238,33 @@ export default function InsightsPanel({ transcript }: InsightsPanelProps) {
 
       {/* Tab Content */}
       <div className="p-6">
+        {/* Delivery Tab */}
+        {activeTab === 'delivery' && (
+          <DeliveryInsightsTab 
+            deliveryMetrics={deliveryMetrics}
+            duration={transcript.raw?.audio_duration}
+          />
+        )}
+
+        {/* Pronunciation Tab */}
+        {activeTab === 'pronunciation' && transcript.dbId && (
+          <PronunciationTab 
+            transcriptId={transcript.dbId}
+            pronunciation={pronunciation}
+            isEnabled={isAzureEnabled}
+          />
+        )}
+
+        {/* Emotion Tab */}
+        {activeTab === 'emotion' && transcript.dbId && (
+          <EmotionTab 
+            transcriptId={transcript.dbId}
+            voiceEmotion={voiceEmotion}
+            textSentiment={transcript.sentiment}
+            isHumeEnabled={isHumeEnabled}
+          />
+        )}
+
         {/* Summary Tab */}
         {activeTab === 'summary' && hasSummary && (
           <div>

@@ -10,6 +10,7 @@ interface TranscriptViewerProps {
 export default function TranscriptViewer({ transcript }: TranscriptViewerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [highlightedWordIndex, setHighlightedWordIndex] = useState<number | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -47,10 +48,32 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
     if (audioRef.current) {
       audioRef.current.load();
       setCurrentTime(0);
+      setDuration(0);
       setIsPlaying(false);
       setAudioError(null);
     }
-  }, [audioUrl]);
+    
+    // Fallback: estimate duration from transcript words if available
+    if (transcript.words && transcript.words.length > 0) {
+      const lastWord = transcript.words[transcript.words.length - 1];
+      if (lastWord && lastWord.end) {
+        // Set estimated duration in seconds (words are in milliseconds)
+        const estimatedDuration = lastWord.end / 1000;
+        // Use this as fallback after a short delay to allow audio metadata to load first
+        const timeoutId = setTimeout(() => {
+          setDuration(prevDuration => {
+            // Only update if we still don't have a valid duration
+            if (prevDuration === 0 || !isFinite(prevDuration)) {
+              return estimatedDuration;
+            }
+            return prevDuration;
+          });
+        }, 1000);
+        
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, [audioUrl, transcript.words]);
 
   const skipTime = (seconds: number) => {
     if (audioRef.current) {
@@ -115,6 +138,17 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
       const time = audio.currentTime * 1000; // Convert to milliseconds
       setCurrentTime(time);
 
+      // Check if duration is now available (some audio files load duration during playback)
+      if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+        setDuration(prevDuration => {
+          // Only update if we don't have a valid duration yet
+          if (prevDuration === 0 || !isFinite(prevDuration)) {
+            return audio.duration;
+          }
+          return prevDuration;
+        });
+      }
+
       // Find the active word
       if (transcript.words) {
         const activeIndex = transcript.words.findIndex(
@@ -157,6 +191,11 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
     const handleCanPlay = () => {
       setAudioError(null);
     };
+    const handleLoadedMetadata = () => {
+      if (audio.duration && isFinite(audio.duration)) {
+        setDuration(audio.duration);
+      }
+    };
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('play', handlePlay);
@@ -164,6 +203,8 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
     audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('durationchange', handleLoadedMetadata);
     
     return () => {
       audio.removeEventListener('timeupdate', updateTime);
@@ -172,6 +213,8 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('durationchange', handleLoadedMetadata);
     };
   }, [transcript.words]);
 
@@ -307,7 +350,7 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
               <input
                 type="range"
                 min="0"
-                max={audioRef.current?.duration ? audioRef.current.duration * 1000 : 100}
+                max={duration > 0 ? duration * 1000 : 100}
                 value={currentTime}
                 onChange={(e) => {
                   const time = parseInt(e.target.value);
@@ -319,8 +362,8 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
                 className="flex-1"
               />
               <span className="text-sm text-gray-600 dark:text-gray-400 w-16">
-                {audioRef.current?.duration ? 
-                  `${Math.floor(audioRef.current.duration / 60)}:${Math.floor(audioRef.current.duration % 60).toString().padStart(2, '0')}` 
+                {duration > 0 ? 
+                  `${Math.floor(duration / 60)}:${Math.floor(duration % 60).toString().padStart(2, '0')}` 
                   : '0:00'}
               </span>
             </div>

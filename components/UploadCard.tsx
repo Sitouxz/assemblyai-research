@@ -48,10 +48,10 @@ export default function UploadCard({ onTranscribe, isProcessing }: UploadCardPro
       return false;
     }
 
-    // Check file size (50MB limit)
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    // Check file size (4MB limit for Vercel serverless)
+    const maxSize = 4 * 1024 * 1024; // 4MB
     if (selectedFile.size > maxSize) {
-      setError('File size must be less than 50MB');
+      setError('File size must be less than 4MB. For larger files, please use a public URL instead.');
       return false;
     }
 
@@ -155,6 +155,13 @@ export default function UploadCard({ onTranscribe, isProcessing }: UploadCardPro
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
         Upload & Settings
       </h2>
+
+      {/* File size notice */}
+      <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+        <p className="text-xs text-blue-700 dark:text-blue-300">
+          💡 Maximum file size: 4MB. For larger files, please use a public URL instead.
+        </p>
+      </div>
 
       {/* File Dropzone */}
       <div

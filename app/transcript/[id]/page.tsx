@@ -65,7 +65,13 @@ export default function TranscriptDetailPage() {
         iab_categories: data.insights?.iab_categories || undefined,
         content_safety_labels: data.insights?.content_safety_labels || undefined,
         auto_highlights_result: data.insights?.auto_highlights || undefined,
-        raw: data,
+        raw: {
+          ...data,
+          // Include analytics in raw for reference
+          deliveryMetrics: data.deliveryMetrics,
+          pronunciation: data.pronunciation,
+          voiceEmotion: data.voiceEmotion,
+        },
       };
       
       setTranscript(transcriptResponse);
@@ -144,7 +150,12 @@ export default function TranscriptDetailPage() {
 
         <div className="space-y-6">
           <TranscriptViewer transcript={transcript} />
-          <InsightsPanel transcript={transcript} />
+          <InsightsPanel 
+            transcript={transcript}
+            deliveryMetrics={transcript.raw?.deliveryMetrics || null}
+            pronunciation={transcript.raw?.pronunciation || null}
+            voiceEmotion={transcript.raw?.voiceEmotion || null}
+          />
         </div>
 
         {/* Share Dialog */}

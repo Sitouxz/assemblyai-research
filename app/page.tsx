@@ -280,7 +280,12 @@ export default function Home() {
             {mode !== 'live' && transcript && (
               <>
                 <TranscriptViewer transcript={transcript} />
-                <InsightsPanel transcript={transcript} />
+                <InsightsPanel 
+                  transcript={transcript}
+                  deliveryMetrics={transcript.raw?.deliveryMetrics || null}
+                  pronunciation={transcript.raw?.pronunciation || null}
+                  voiceEmotion={transcript.raw?.voiceEmotion || null}
+                />
               </>
             )}
           </section>

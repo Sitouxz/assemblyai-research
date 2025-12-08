@@ -14,6 +14,46 @@ interface PatchNote {
 
 const patchNotes: PatchNote[] = [
   {
+    version: '2.1.0',
+    date: 'December 2024',
+    title: 'Speaking Performance Analytics',
+    changes: [
+      {
+        category: 'New',
+        items: [
+          '📊 Comprehensive Delivery Metrics - Automatic analysis of speaking pace, pauses, and fluency (100% FREE)',
+          '📈 Speaking Pace Timeline - Visual WPM breakdown by 30-second segments',
+          '⭐ Speech Clarity Score - Confidence-based articulation analysis from AssemblyAI',
+          '🗺️ Filler Word Hotspots - Detection of clustered filler words with timestamps',
+          '🏆 Peak Performance Segments - Top 3 best moments highlighted with scores',
+          '🚨 Critical Moments Detection - Automatic flagging of problem areas (long pauses, filler clusters, unclear speech)',
+          '📊 Comparison Benchmarks - Compare your performance to podcasters, presenters, and news anchors',
+          '⚡ Energy/Momentum Score - Track if you\'re speeding up or slowing down',
+          '🎵 Rhythm Variation Analysis - Measure pace consistency (monotone vs dynamic)',
+          '📝 Sentence Structure Analysis - Avg/longest/shortest sentences + run-on detection',
+          '🔄 Speaker Interruption Detection - Overtalk analysis for multi-speaker transcripts',
+          '⏸️ Longest Pause Highlight - Context-aware pause detection with before/after words',
+          '🎤 Azure Pronunciation Assessment - Word-level pronunciation scoring (optional, on-demand)',
+          '🎭 Voice Emotion Analysis - Hume AI integration for emotional tone detection (optional, on-demand)',
+          '💡 Intelligent Improvement Tips - Context-aware suggestions based on your metrics',
+        ],
+      },
+      {
+        category: 'Improved',
+        items: [
+          'Enhanced Delivery tab with 13+ new metrics and visualizations',
+          'Automatic calculation of all delivery metrics on every transcript',
+          'Beautiful color-coded visualizations for pace, confidence, and issues',
+          'Collapsible sections for detailed analysis',
+          'Feature flags for optional services (Azure, Hume)',
+          'Better error handling and graceful degradation when services disabled',
+          'Dark mode support for all new components',
+          'Responsive design for mobile viewing',
+        ],
+      },
+    ],
+  },
+  {
     version: '2.0.0',
     date: 'November 26, 2024',
     title: 'Major Platform Upgrade',
@@ -301,7 +341,7 @@ export default function PatchNotes() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div className="p-3 bg-white dark:bg-gray-800 rounded-lg">
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              50+
+              65+
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
               Features
@@ -317,15 +357,15 @@ export default function PatchNotes() {
           </div>
           <div className="p-3 bg-white dark:bg-gray-800 rounded-lg">
             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              5
+              13+
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              Export Formats
+              Delivery Metrics
             </div>
           </div>
           <div className="p-3 bg-white dark:bg-gray-800 rounded-lg">
             <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-              15+
+              20+
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
               API Endpoints

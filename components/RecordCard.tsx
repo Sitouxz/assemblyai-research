@@ -215,9 +215,13 @@ export default function RecordCard({ onTranscribe, isProcessing }: RecordCardPro
         <p className="text-sm text-blue-800 dark:text-blue-400">
           💡 Click "Start Recording" to record audio from your microphone. Once finished, you can preview and transcribe it using the same pipeline as file uploads.
         </p>
+        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+          Note: Keep recordings under 5 minutes to stay within the 4MB size limit.
+        </p>
       </div>
     </div>
   );
 }
+
 
 
