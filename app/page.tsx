@@ -11,7 +11,6 @@ import TranscriptViewer from '@/components/TranscriptViewer';
 import InsightsPanel from '@/components/InsightsPanel';
 import HistorySidebar from '@/components/HistorySidebar';
 import JsonViewer from '@/components/JsonViewer';
-import PatchNotes from '@/components/PatchNotes';
 import ApiKeyIndicator from '@/components/ApiKeyIndicator';
 import { TranscriptResponse, TranscriptionStatus, HistoryItem } from '@/lib/types';
 
@@ -209,11 +208,6 @@ export default function Home() {
           >
             {apiReady ? '✓ API Ready' : '✗ No API Key'}
           </span>
-        </div>
-
-        {/* Patch Notes */}
-        <div className="mb-8">
-          <PatchNotes />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

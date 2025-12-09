@@ -48,6 +48,12 @@ export default function Header() {
               >
                 📖 How to Use
               </Link>
+              <Link
+                href="/changelog"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                Changelog
+              </Link>
             </nav>
           </div>
 
